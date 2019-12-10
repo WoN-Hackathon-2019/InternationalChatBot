@@ -1,4 +1,4 @@
-package won.bot.skeleton.impl;
+package won.bot.icb.impl;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
@@ -27,10 +27,10 @@ import won.bot.framework.extensions.matcher.MatcherExtension;
 import won.bot.framework.extensions.matcher.MatcherExtensionAtomCreatedEvent;
 import won.bot.framework.extensions.serviceatom.ServiceAtomBehaviour;
 import won.bot.framework.extensions.serviceatom.ServiceAtomExtension;
-import won.bot.skeleton.action.MatcherExtensionAtomCreatedAction;
-import won.bot.skeleton.context.SkeletonBotContextWrapper;
+import won.bot.icb.action.MatcherExtensionAtomCreatedAction;
+import won.bot.icb.context.InternationalChatBotContextWrapper;
 
-public class SkeletonBot extends EventBot implements MatcherExtension, ServiceAtomExtension {
+public class InternationalChatBot extends EventBot implements MatcherExtension, ServiceAtomExtension {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private int registrationMatcherRetryInterval;
     private MatcherBehaviour matcherBehaviour;
@@ -54,13 +54,13 @@ public class SkeletonBot extends EventBot implements MatcherExtension, ServiceAt
     @Override
     protected void initializeEventListeners() {
         EventListenerContext ctx = getEventListenerContext();
-        if (!(getBotContextWrapper() instanceof SkeletonBotContextWrapper)) {
-            logger.error(getBotContextWrapper().getBotName() + " does not work without a SkeletonBotContextWrapper");
+        if (!(getBotContextWrapper() instanceof InternationalChatBotContextWrapper)) {
+            logger.error(getBotContextWrapper().getBotName() + " does not work without a InternationalChatBotContextWrapper");
             throw new IllegalStateException(
-                            getBotContextWrapper().getBotName() + " does not work without a SkeletonBotContextWrapper");
+                            getBotContextWrapper().getBotName() + " does not work without a InternationalChatBotContextWrapper");
         }
         EventBus bus = getEventBus();
-        SkeletonBotContextWrapper botContextWrapper = (SkeletonBotContextWrapper) getBotContextWrapper();
+        InternationalChatBotContextWrapper botContextWrapper = (InternationalChatBotContextWrapper) getBotContextWrapper();
         // register listeners for event.impl.command events used to tell the bot to send
         // messages
         ExecuteWonMessageCommandBehaviour wonMessageCommandBehaviour = new ExecuteWonMessageCommandBehaviour(ctx);
@@ -72,7 +72,7 @@ public class SkeletonBot extends EventBot implements MatcherExtension, ServiceAt
         // as this is an extension, it can be activated and deactivated as needed
         // if activated, a MatcherExtensionAtomCreatedEvent is sent every time a new
         // atom is created on a monitored node
-        matcherBehaviour = new MatcherBehaviour(ctx, "BotSkeletonMatchingExtension", registrationMatcherRetryInterval);
+        matcherBehaviour = new MatcherBehaviour(ctx, "InternationalChatBotMatchingExtension", registrationMatcherRetryInterval);
         matcherBehaviour.activate();
         // create filters to determine which atoms the bot should react to
         NotFilter noOwnAtoms = new NotFilter(
@@ -85,7 +85,7 @@ public class SkeletonBot extends EventBot implements MatcherExtension, ServiceAt
                 EventListenerContext ctx = getEventListenerContext();
                 ConnectFromOtherAtomEvent connectFromOtherAtomEvent = (ConnectFromOtherAtomEvent) event;
                 try {
-                    String message = "Hello i am the BotSkeletor i will send you a message everytime an atom is created...";
+                    String message = "Hello i am the InternationalChatBot i will send you a message everytime an atom is created...";
                     final ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(
                                     connectFromOtherAtomEvent.getRecipientSocket(),
                                     connectFromOtherAtomEvent.getSenderSocket(), message);
