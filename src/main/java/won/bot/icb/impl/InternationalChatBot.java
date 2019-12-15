@@ -57,7 +57,7 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
         if (!(getBotContextWrapper() instanceof InternationalChatBotContextWrapper)) {
             logger.error(getBotContextWrapper().getBotName() + " does not work without a InternationalChatBotContextWrapper");
             throw new IllegalStateException(
-                            getBotContextWrapper().getBotName() + " does not work without a InternationalChatBotContextWrapper");
+                    getBotContextWrapper().getBotName() + " does not work without a InternationalChatBotContextWrapper");
         }
         EventBus bus = getEventBus();
         InternationalChatBotContextWrapper botContextWrapper = (InternationalChatBotContextWrapper) getBotContextWrapper();
@@ -76,9 +76,10 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
         matcherBehaviour.activate();
         // create filters to determine which atoms the bot should react to
         NotFilter noOwnAtoms = new NotFilter(
-                        new AtomUriInNamedListFilter(ctx, ctx.getBotContextWrapper().getAtomCreateListName()));
+                new AtomUriInNamedListFilter(ctx, ctx.getBotContextWrapper().getAtomCreateListName()));
         // filter to prevent reacting to serviceAtom<->ownedAtom events;
         NotFilter noInternalServiceAtomEventFilter = getNoInternalServiceAtomEventFilter();
+        /*
         bus.subscribe(ConnectFromOtherAtomEvent.class, noInternalServiceAtomEventFilter, new BaseEventBotAction(ctx) {
             @Override
             protected void doRun(Event event, EventListener executingListener) {
@@ -87,36 +88,37 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
                 try {
                     String message = "Hello i am the InternationalChatBot i will send you a message everytime an atom is created...";
                     final ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(
-                                    connectFromOtherAtomEvent.getRecipientSocket(),
-                                    connectFromOtherAtomEvent.getSenderSocket(), message);
+                            connectFromOtherAtomEvent.getRecipientSocket(),
+                            connectFromOtherAtomEvent.getSenderSocket(), message);
                     ctx.getEventBus().subscribe(ConnectCommandSuccessEvent.class, new ActionOnFirstEventListener(ctx,
-                                    new CommandResultFilter(connectCommandEvent), new BaseEventBotAction(ctx) {
-                                        @Override
-                                        protected void doRun(Event event, EventListener executingListener) {
-                                            ConnectCommandResultEvent connectionMessageCommandResultEvent = (ConnectCommandResultEvent) event;
-                                            if (!connectionMessageCommandResultEvent.isSuccess()) {
-                                                logger.error("Failure when trying to open a received Request: "
-                                                                + connectionMessageCommandResultEvent.getMessage());
-                                            } else {
-                                                logger.info(
-                                                                "Add an established connection " +
-                                                                                connectCommandEvent.getLocalSocket()
-                                                                                + " -> "
-                                                                                + connectCommandEvent.getTargetSocket()
-                                                                                +
-                                                                                " to the botcontext ");
-                                                botContextWrapper.addConnectedSocket(
-                                                                connectCommandEvent.getLocalSocket(),
-                                                                connectCommandEvent.getTargetSocket());
-                                            }
-                                        }
-                                    }));
+                            new CommandResultFilter(connectCommandEvent), new BaseEventBotAction(ctx) {
+                        @Override
+                        protected void doRun(Event event, EventListener executingListener) {
+                            ConnectCommandResultEvent connectionMessageCommandResultEvent = (ConnectCommandResultEvent) event;
+                            if (!connectionMessageCommandResultEvent.isSuccess()) {
+                                logger.error("Failure when trying to open a received Request: "
+                                        + connectionMessageCommandResultEvent.getMessage());
+                            } else {
+                                logger.info(
+                                        "Add an established connection " +
+                                                connectCommandEvent.getLocalSocket()
+                                                + " -> "
+                                                + connectCommandEvent.getTargetSocket()
+                                                +
+                                                " to the botcontext ");
+                                botContextWrapper.addConnectedSocket(
+                                        connectCommandEvent.getLocalSocket(),
+                                        connectCommandEvent.getTargetSocket());
+                            }
+                        }
+                    }));
                     ctx.getEventBus().publish(connectCommandEvent);
                 } catch (Exception te) {
                     logger.error(te.getMessage(), te);
                 }
             }
         });
+        */
         // listen for the MatcherExtensionAtomCreatedEvent
         bus.subscribe(MatcherExtensionAtomCreatedEvent.class, new MatcherExtensionAtomCreatedAction(ctx));
         bus.subscribe(CloseFromOtherAtomEvent.class, new BaseEventBotAction(ctx) {
@@ -127,7 +129,7 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
                 URI targetSocketUri = closeFromOtherAtomEvent.getSocketURI();
                 URI senderSocketUri = closeFromOtherAtomEvent.getTargetSocketURI();
                 logger.info("Remove a closed connection " + senderSocketUri + " -> " + targetSocketUri
-                                + " from the botcontext ");
+                        + " from the botcontext ");
                 botContextWrapper.removeConnectedSocket(senderSocketUri, targetSocketUri);
             }
         });

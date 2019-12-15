@@ -4,6 +4,7 @@ public class ChatPartner {
 
     private String atomURI;
     private String ownCountryCode, reqCountryCode;
+    private String connectedAtomURI;
 
     public ChatPartner(String atomURI, String ownCountryCode, String reqCountryCode) {
         this.atomURI = atomURI;
@@ -33,6 +34,14 @@ public class ChatPartner {
 
     public void setReqCountryCode(String reqCountryCode) {
         this.reqCountryCode = reqCountryCode;
+    }
+
+    public String getConnectedAtomURI() {
+        return connectedAtomURI;
+    }
+
+    public void setConnectedAtomURI(String connectedAtomURI) {
+        this.connectedAtomURI = connectedAtomURI;
     }
 
     @Override

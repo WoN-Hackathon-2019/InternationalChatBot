@@ -61,6 +61,10 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
                         logger.error("Error while adding new Chat Partner");
                     }
 
+                    // try to match chat partners
+                    logger.info("Trying to match chat partners");
+                    botContextWrapper.matchChatPartners();
+
                     logger.info("TODO: Send MSG(" + senderSocket + "->" + targetSocket + ") that we registered that an ICB Atom was created, atomUri is: " + atomCreatedEvent.getAtomURI());
                     WonMessage wonMessage = WonMessageBuilder
                             .connectionMessage()

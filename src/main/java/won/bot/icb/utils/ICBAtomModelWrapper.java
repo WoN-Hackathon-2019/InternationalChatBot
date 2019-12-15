@@ -22,7 +22,7 @@ public class ICBAtomModelWrapper extends DefaultAtomModelWrapper {
         super(atomDataset);
     }
 
-    public Coordinate getSeeksLocationCoordinate(){
+    public Coordinate getSeeksLocationCoordinate() {
         Resource seeks = null;
         for (Resource r : getSeeksNodes()) {
             seeks = r;
@@ -30,5 +30,4 @@ public class ICBAtomModelWrapper extends DefaultAtomModelWrapper {
         }
         return getLocationCoordinate(seeks);
     }
-
 }
