@@ -17,18 +17,22 @@ import won.bot.framework.eventbot.event.impl.command.connect.ConnectCommandResul
 import won.bot.framework.eventbot.event.impl.command.connect.ConnectCommandSuccessEvent;
 import won.bot.framework.eventbot.event.impl.wonmessage.CloseFromOtherAtomEvent;
 import won.bot.framework.eventbot.event.impl.wonmessage.ConnectFromOtherAtomEvent;
+import won.bot.framework.eventbot.event.impl.wonmessage.MessageFromOtherAtomEvent;
 import won.bot.framework.eventbot.filter.impl.AtomUriInNamedListFilter;
 import won.bot.framework.eventbot.filter.impl.CommandResultFilter;
 import won.bot.framework.eventbot.filter.impl.NotFilter;
 import won.bot.framework.eventbot.listener.EventListener;
+import won.bot.framework.eventbot.listener.impl.ActionOnEventListener;
 import won.bot.framework.eventbot.listener.impl.ActionOnFirstEventListener;
 import won.bot.framework.extensions.matcher.MatcherBehaviour;
 import won.bot.framework.extensions.matcher.MatcherExtension;
 import won.bot.framework.extensions.matcher.MatcherExtensionAtomCreatedEvent;
 import won.bot.framework.extensions.serviceatom.ServiceAtomBehaviour;
 import won.bot.framework.extensions.serviceatom.ServiceAtomExtension;
+import won.bot.icb.action.ChatRelayAction;
 import won.bot.icb.action.MatcherExtensionAtomCreatedAction;
 import won.bot.icb.context.InternationalChatBotContextWrapper;
+import won.bot.icb.event.TranslationEvent;
 
 public class InternationalChatBot extends EventBot implements MatcherExtension, ServiceAtomExtension {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -79,7 +83,7 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
                 new AtomUriInNamedListFilter(ctx, ctx.getBotContextWrapper().getAtomCreateListName()));
         // filter to prevent reacting to serviceAtom<->ownedAtom events;
         NotFilter noInternalServiceAtomEventFilter = getNoInternalServiceAtomEventFilter();
-        /*
+
         bus.subscribe(ConnectFromOtherAtomEvent.class, noInternalServiceAtomEventFilter, new BaseEventBotAction(ctx) {
             @Override
             protected void doRun(Event event, EventListener executingListener) {
@@ -118,7 +122,7 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
                 }
             }
         });
-        */
+
         // listen for the MatcherExtensionAtomCreatedEvent
         bus.subscribe(MatcherExtensionAtomCreatedEvent.class, new MatcherExtensionAtomCreatedAction(ctx));
         bus.subscribe(CloseFromOtherAtomEvent.class, new BaseEventBotAction(ctx) {
@@ -133,5 +137,10 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
                 botContextWrapper.removeConnectedSocket(senderSocketUri, targetSocketUri);
             }
         });
+
+        // listen for
+        bus.subscribe(MessageFromOtherAtomEvent.class,
+                new ActionOnEventListener(ctx, "ReceivedTextMessage", new ChatRelayAction(ctx)));
+
     }
 }

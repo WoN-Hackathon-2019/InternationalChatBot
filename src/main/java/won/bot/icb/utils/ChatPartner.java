@@ -1,10 +1,13 @@
 package won.bot.icb.utils;
 
+import won.protocol.model.Connection;
+
 public class ChatPartner {
 
     private String atomURI;
     private String ownCountryCode, reqCountryCode;
     private String connectedAtomURI;
+    private Connection con;
 
     public ChatPartner(String atomURI, String ownCountryCode, String reqCountryCode) {
         this.atomURI = atomURI;
@@ -42,6 +45,14 @@ public class ChatPartner {
 
     public void setConnectedAtomURI(String connectedAtomURI) {
         this.connectedAtomURI = connectedAtomURI;
+    }
+
+    public Connection getConnection() {
+        return con;
+    }
+
+    public void setConnection(Connection con) {
+        this.con = con;
     }
 
     @Override

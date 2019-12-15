@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.framework.bot.context.BotContext;
 import won.bot.framework.extensions.serviceatom.ServiceAtomEnabledBotContextWrapper;
+import won.bot.icb.action.ChatRelayAction;
 import won.bot.icb.utils.ChatPartner;
 import won.protocol.model.Coordinate;
 
@@ -74,7 +75,7 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
         String reqCC = reqCCOpt.get();
 
         ChatPartner toAdd = new ChatPartner(atomURI, ownCC, reqCC);
-
+        logger.info("Added Chatpartner: " + toAdd.toString());
         unmatchedChatPartners.add(toAdd);
 
         return true;
@@ -96,7 +97,16 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
                     logger.info("Successfully matched " + ucp1.getAtomURI() + " and " + ucp2.getAtomURI());
                     return;
                 }
+
+
             }
         }
+    }
+
+    public ChatPartner getChatPartner(String chatPartnerURI){
+        for (ChatPartner c : matchedChatPartners) {
+            if(c.getAtomURI().equals(chatPartnerURI)) return c;
+        }
+        return null;
     }
 }
