@@ -29,7 +29,7 @@ import won.bot.framework.extensions.matcher.MatcherExtension;
 import won.bot.framework.extensions.matcher.MatcherExtensionAtomCreatedEvent;
 import won.bot.framework.extensions.serviceatom.ServiceAtomBehaviour;
 import won.bot.framework.extensions.serviceatom.ServiceAtomExtension;
-import won.bot.icb.action.IncomingMessageAndRequestTranslationAction;
+import won.bot.icb.action.IncomingMessageAction;
 import won.bot.icb.action.MatcherExtensionAtomCreatedAction;
 import won.bot.icb.context.InternationalChatBotContextWrapper;
 
@@ -139,7 +139,7 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
 
         // listen for the MessageFromOtherAtomEvent
         bus.subscribe(MessageFromOtherAtomEvent.class,
-                new ActionOnEventListener(ctx, "ReceivedTextMessage", new IncomingMessageAndRequestTranslationAction(ctx)));
+                new ActionOnEventListener(ctx, "ReceivedTextMessage", new IncomingMessageAction(ctx)));
 
 
     }

@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.framework.bot.context.BotContext;
 import won.bot.framework.extensions.serviceatom.ServiceAtomEnabledBotContextWrapper;
-import won.bot.icb.utils.ChatPartner;
+import won.bot.icb.utils.ChatClient;
 import won.protocol.model.Coordinate;
 
 import java.lang.invoke.MethodHandles;
@@ -13,9 +13,11 @@ import java.util.*;
 
 public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotContextWrapper {
     private final String connectedSocketsMap;
-    private final HashSet<ChatPartner> unmatchedChatPartners = new HashSet<>();
-    private final HashSet<ChatPartner> matchedChatPartners = new HashSet<>();
+    private final HashSet<ChatClient> unmatchedChatClients = new HashSet<>();
+    private final HashSet<ChatClient> matchedChatClients = new HashSet<>();
+    private static String translateURI; // translation atom URI
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private int conID = 0;
 
     public InternationalChatBotContextWrapper(BotContext botContext, String botName) {
         super(botContext, botName);
@@ -46,6 +48,14 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
         getBotContext().removeFromListMap(connectedSocketsMap, senderSocket.toString(), targetSocket);
     }
 
+    public String getTranslateURI() {
+        return translateURI;
+    }
+
+    public static void setTranslateURI(String translateURI) {
+        InternationalChatBotContextWrapper.translateURI = translateURI;
+    }
+
     /**
      * Adds a Chat Partner
      *
@@ -55,56 +65,63 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
      */
     public boolean addChatPartner(String atomURI, Coordinate ownCoord, Coordinate reqCoord) {
 
-        String ownLong = Float.toString(ownCoord.getLongitude());
-        String ownLat = Float.toString(ownCoord.getLatitude());
+        String sourceLong = Float.toString(ownCoord.getLongitude());
+        String sourceLat = Float.toString(ownCoord.getLatitude());
 
-        String reqLong = Float.toString(reqCoord.getLongitude());
-        String reqLat = Float.toString(reqCoord.getLatitude());
+        String targetLon = Float.toString(reqCoord.getLongitude());
+        String targetLat = Float.toString(reqCoord.getLatitude());
 
-        Optional<String> ownCCOpt = won.bot.icb.api.InternationalChatBotAPI.countryCodeOfGPS(ownLat, ownLong);
+        Optional<String> ownCCOpt = won.bot.icb.api.InternationalChatBotAPI.countryCodeOfGPS(sourceLat, sourceLong);
         if (!ownCCOpt.isPresent()) {
             return false;
         }
         String ownCC = ownCCOpt.get();
 
-        Optional<String> reqCCOpt = won.bot.icb.api.InternationalChatBotAPI.countryCodeOfGPS(reqLat, reqLong);
+        Optional<String> reqCCOpt = won.bot.icb.api.InternationalChatBotAPI.countryCodeOfGPS(targetLat, targetLon);
         if (!reqCCOpt.isPresent()) {
             return false;
         }
         String reqCC = reqCCOpt.get();
 
-        ChatPartner toAdd = new ChatPartner(atomURI, ownCC, reqCC);
+        ChatClient toAdd = new ChatClient(atomURI, ownCC, reqCC, sourceLat, sourceLong, targetLat, targetLon);
         logger.info("Added Chatpartner: " + toAdd.toString());
-        unmatchedChatPartners.add(toAdd);
+        unmatchedChatClients.add(toAdd);
 
         return true;
     }
 
+
     public void matchChatPartners() {
         // TODO: this is stupid, maybe do it better?
         // try to match every atom with all other atoms
-        for (ChatPartner ucp1 : unmatchedChatPartners) {
-            for (ChatPartner ucp2 : unmatchedChatPartners) {
+        for (ChatClient ucp1 : unmatchedChatClients) {
+            for (ChatClient ucp2 : unmatchedChatClients) {
                 // atoms match
-                if (ucp1.getOwnCountryCode().equals(ucp2.getReqCountryCode()) && ucp2.getOwnCountryCode().equals(ucp1.getReqCountryCode())) {
-                    ucp1.setConnectedAtomURI(ucp2.getAtomURI());
-                    ucp2.setConnectedAtomURI(ucp1.getAtomURI());
-                    matchedChatPartners.add(ucp1);
-                    matchedChatPartners.add(ucp2);
-                    unmatchedChatPartners.remove(ucp1);
-                    unmatchedChatPartners.remove(ucp2);
-                    logger.info("Successfully matched " + ucp1.getAtomURI() + " and " + ucp2.getAtomURI());
+                if (ucp1.getSourceCountryCode().equals(ucp2.getTargetCountryCode()) && ucp2.getSourceCountryCode().equals(ucp1.getTargetCountryCode())) {
+                    ucp1.setConnectionID(conID);
+                    ucp2.setConnectionID(conID++);
+                    matchedChatClients.add(ucp1);
+                    matchedChatClients.add(ucp2);
+                    unmatchedChatClients.remove(ucp1);
+                    unmatchedChatClients.remove(ucp2);
+                    // TODO: start connection to both chat partners
+                    logger.info("Successfully matched " + ucp1.getAtomURI() + " and " + ucp2.getAtomURI() + "with connection ID " + ucp1.getConnectionID());
                     return;
                 }
-
-
             }
         }
     }
 
-    public ChatPartner getChatPartner(String chatPartnerURI){
-        for (ChatPartner c : matchedChatPartners) {
-            if(c.getAtomURI().equals(chatPartnerURI)) return c;
+    public ChatClient getChatClient(String chatClientURI) {
+        for (ChatClient c : matchedChatClients) {
+            if (c.getAtomURI().equals(chatClientURI)) return c;
+        }
+        return null;
+    }
+
+    public ChatClient getChatPartner(String chatPartnerURI, int conID){
+        for (ChatClient c : matchedChatClients) {
+            if (!c.getAtomURI().equals(chatPartnerURI) && c.getConnectionID() == conID) return c;
         }
         return null;
     }
