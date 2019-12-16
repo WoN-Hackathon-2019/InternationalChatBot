@@ -82,15 +82,6 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
                     matchedChatClients.add(ucp2);
                     unmatchedChatClients.remove(ucp1);
                     unmatchedChatClients.remove(ucp2);
-                    // TODO: start connection to both chat partners
-                    String message = "Hello, let's connect! We found a partner for you! <3"; //optional welcome message
-
-                    ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(
-                            URI.create(getBotChatSocketURI()),
-                            URI.create(ucp1.getChatSocketURI()),
-                            message);
-                    getEventBus().publish(connectCommandEvent);
-                    // ----------------
                     logger.info("Successfully matched " + ucp1.getAtomURI() + " and " + ucp2.getAtomURI() + "with connection ID " + ucp1.getConnectionID());
                     return;
                 }

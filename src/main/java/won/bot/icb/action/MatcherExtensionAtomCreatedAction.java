@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import won.bot.framework.eventbot.EventListenerContext;
 import won.bot.framework.eventbot.action.BaseEventBotAction;
 import won.bot.framework.eventbot.event.Event;
+import won.bot.framework.eventbot.event.impl.command.connect.ConnectCommandEvent;
 import won.bot.framework.eventbot.listener.EventListener;
 import won.bot.framework.extensions.matcher.MatcherExtensionAtomCreatedEvent;
 import won.bot.icb.context.InternationalChatBotContextWrapper;
@@ -72,7 +73,7 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
                         logger.error("Chat Socket URI is NULL");
                     }
 
-                    if(botContextWrapper.addChatPartner(newAtom.getAtomUri(), chatSocketURI, newAtom.getLocationCoordinate(), newAtom.getSeeksLocationCoordinate())){
+                    if(addChatPartner(botContextWrapper, newAtom.getAtomUri(), chatSocketURI, newAtom.getLocationCoordinate(), newAtom.getSeeksLocationCoordinate())){
                         logger.info("New Chat Partner successfully added");
                     } else {
                         logger.error("Error while adding new Chat Partner");
@@ -97,7 +98,7 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
         }
     }
 
-    private boolean addChatPartner(InternationalChatBotContextWrapper icbcw, String atomURI, String chatSocketURI, Coordinate ownCoord, Coordinate reqCoord){
+    private boolean addChatPartner(EventListenerContext ectx, InternationalChatBotContextWrapper bctx, String atomURI, String chatSocketURI, Coordinate ownCoord, Coordinate reqCoord){
         String sourceLong = Float.toString(ownCoord.getLongitude());
         String sourceLat = Float.toString(ownCoord.getLatitude());
 
@@ -118,7 +119,15 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
 
         ChatClient toAdd = new ChatClient(atomURI, chatSocketURI, ownCC, reqCC, sourceLat, sourceLong, targetLat, targetLon);
         logger.info("Added Chatpartner: " + toAdd.toString());
-        icbcw.addChatPartner(toAdd);
+        bctx.addChatPartner(toAdd);
+
+        String message = "Hello, let's connect! We found a partner for you! <3"; //optional welcome message
+
+        ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(
+                URI.create(bctx.getBotChatSocketURI()),
+                URI.create(toAdd.getChatSocketURI()),
+                message);
+        ectx.getEventBus().publish(connectCommandEvent);
 
         return true;
 
