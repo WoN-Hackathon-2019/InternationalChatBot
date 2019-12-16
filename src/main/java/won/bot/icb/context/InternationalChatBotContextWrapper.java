@@ -20,7 +20,7 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
     private final HashSet<ChatClient> matchedChatClients = new HashSet<>();
     private static String translateURI; // translation atom URI
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    private int conID = 0;
+    private int conID = 1;
 
     public InternationalChatBotContextWrapper(BotContext botContext, String botName) {
         super(botContext, botName);
@@ -52,7 +52,7 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
     }
 
     public String getBotChatSocketURI() {
-        return getServiceAtomUri().toString() + "#chatSocket";
+        return getServiceAtomUri().toString() + "#ChatSocket";
     }
 
     public String getTranslateURI() {
@@ -64,8 +64,8 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
     }
 
 
-    public void addChatPartner(ChatClient toAdd) {
-        unmatchedChatClients.add(toAdd);
+    public boolean addChatPartner(ChatClient toAdd) {
+        return unmatchedChatClients.add(toAdd);
     }
 
 
@@ -77,11 +77,12 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
                 // atoms match
                 if (ucp1.getSourceCountryCode().equals(ucp2.getTargetCountryCode()) && ucp2.getSourceCountryCode().equals(ucp1.getTargetCountryCode())) {
                     ucp1.setConnectionID(conID);
-                    ucp2.setConnectionID(conID++);
+                    ucp2.setConnectionID(conID);
                     matchedChatClients.add(ucp1);
                     matchedChatClients.add(ucp2);
                     unmatchedChatClients.remove(ucp1);
                     unmatchedChatClients.remove(ucp2);
+                    conID++;
                     logger.info("Successfully matched " + ucp1.getAtomURI() + " and " + ucp2.getAtomURI() + "with connection ID " + ucp1.getConnectionID());
                     return;
                 }
@@ -89,16 +90,38 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
         }
     }
 
-    public ChatClient getChatClient(String chatClientURI) {
+    public ChatClient getUnmatchedChatClient(String chatClientURI) {
+        for (ChatClient c : unmatchedChatClients) {
+            if (c.getAtomURI().equals(chatClientURI)) return c;
+        }
+        return null;
+    }
+
+    public ChatClient getMatchedChatClient(String chatClientURI) {
         for (ChatClient c : matchedChatClients) {
             if (c.getAtomURI().equals(chatClientURI)) return c;
         }
         return null;
     }
 
+    public ChatClient getChatClient(String chatClientURI){
+        ChatClient unmatched = getUnmatchedChatClient(chatClientURI);
+        ChatClient matched = getMatchedChatClient(chatClientURI);
+        if(unmatched!=null){
+            return unmatched;
+        } else if(matched!=null){
+            return matched;
+        } else {
+            return null;
+        }
+    }
+
     public ChatClient getChatPartner(String chatPartnerURI, int conID) {
         for (ChatClient c : matchedChatClients) {
-            if (!c.getAtomURI().equals(chatPartnerURI) && c.getConnectionID() == conID) return c;
+            if (!c.getAtomURI().equals(chatPartnerURI) && c.getConnectionID() == conID){
+                logger.info("ChatPartner for " + chatPartnerURI + " found: " + c.getAtomURI());
+                return c;
+            }
         }
         return null;
     }

@@ -2,6 +2,7 @@ package won.bot.icb.impl;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,9 @@ import won.bot.framework.extensions.serviceatom.ServiceAtomExtension;
 import won.bot.icb.action.IncomingMessageAction;
 import won.bot.icb.action.MatcherExtensionAtomCreatedAction;
 import won.bot.icb.context.InternationalChatBotContextWrapper;
+import won.bot.icb.utils.ChatClient;
+import won.protocol.model.Connection;
+import won.protocol.util.linkeddata.WonLinkedDataUtils;
 
 public class InternationalChatBot extends EventBot implements MatcherExtension, ServiceAtomExtension {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -90,7 +94,7 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
                 EventListenerContext ctx = getEventListenerContext();
                 ConnectFromOtherAtomEvent connectFromOtherAtomEvent = (ConnectFromOtherAtomEvent) event;
                 try {
-                    String message = "Hello i am the InternationalChatBot i will send you a message everytime an atom is created...";
+                    String message = "Thank you for accepting the connection! Hold the line for a chat partner...";
                     final ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(
                             connectFromOtherAtomEvent.getRecipientSocket(),
                             connectFromOtherAtomEvent.getSenderSocket(), message);
@@ -113,6 +117,32 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
                                 botContextWrapper.addConnectedSocket(
                                         connectCommandEvent.getLocalSocket(),
                                         connectCommandEvent.getTargetSocket());
+
+                                Optional<URI> connectionURI = WonLinkedDataUtils.getConnectionURIForSocketAndTargetSocket(
+                                        connectCommandEvent.getLocalSocket(),
+                                        connectCommandEvent.getTargetSocket(),
+                                        ctx.getLinkedDataSource());
+
+                                if(!connectionURI.isPresent()){
+                                    logger.error("Connection not found");
+                                }
+
+                                Optional<Connection> con = WonLinkedDataUtils.getConnectionForConnectionURI(connectionURI.get(), ctx.getLinkedDataSource());
+                                ChatClient client = botContextWrapper.getChatClient(connectCommandEvent.getTargetAtomURI().toString());
+                                logger.info(connectCommandEvent.getTargetSocket().toString());
+                                if(client!=null) {
+                                    logger.info(botContextWrapper.getChatClient(connectCommandEvent.getTargetAtomURI().toString()).toString());
+                                    try {
+                                        client.setConnection(con.get());
+                                        logger.info(con.get().toString());
+                                        logger.info("Connection successfully added to ChatClient");
+                                    } catch(Exception e){
+                                        logger.error("Error while setting Connection: " + e.toString());
+                                    }
+                                } else {
+                                    logger.error("Client is null");
+                                }
+
                             }
                         }
                     }));

@@ -6,7 +6,12 @@ import won.bot.framework.eventbot.EventListenerContext;
 import won.bot.framework.eventbot.action.BaseEventBotAction;
 import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.impl.command.connect.ConnectCommandEvent;
+import won.bot.framework.eventbot.event.impl.command.connect.ConnectCommandResultEvent;
+import won.bot.framework.eventbot.event.impl.command.connect.ConnectCommandSuccessEvent;
+import won.bot.framework.eventbot.event.impl.wonmessage.ConnectFromOtherAtomEvent;
+import won.bot.framework.eventbot.filter.impl.CommandResultFilter;
 import won.bot.framework.eventbot.listener.EventListener;
+import won.bot.framework.eventbot.listener.impl.ActionOnFirstEventListener;
 import won.bot.framework.extensions.matcher.MatcherExtensionAtomCreatedEvent;
 import won.bot.icb.context.InternationalChatBotContextWrapper;
 import won.bot.icb.utils.ChatClient;
@@ -73,7 +78,7 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
                         logger.error("Chat Socket URI is NULL");
                     }
 
-                    if(addChatPartner(botContextWrapper, newAtom.getAtomUri(), chatSocketURI, newAtom.getLocationCoordinate(), newAtom.getSeeksLocationCoordinate())){
+                    if(addChatPartner(ctx, botContextWrapper, newAtom.getAtomUri(), chatSocketURI, newAtom.getLocationCoordinate(), newAtom.getSeeksLocationCoordinate())){
                         logger.info("New Chat Partner successfully added");
                     } else {
                         logger.error("Error while adding new Chat Partner");
@@ -119,9 +124,9 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
 
         ChatClient toAdd = new ChatClient(atomURI, chatSocketURI, ownCC, reqCC, sourceLat, sourceLong, targetLat, targetLon);
         logger.info("Added Chatpartner: " + toAdd.toString());
-        bctx.addChatPartner(toAdd);
 
-        String message = "Hello, let's connect! We found a partner for you! <3"; //optional welcome message
+        String message = "Hello, we have seen that you are interested in chatting with somebody from " + reqCC.toUpperCase() + "! We" +
+                "are currently waiting for a partner to match with you...";
 
         ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(
                 URI.create(bctx.getBotChatSocketURI()),
@@ -129,7 +134,7 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
                 message);
         ectx.getEventBus().publish(connectCommandEvent);
 
-        return true;
+        return bctx.addChatPartner(toAdd);
 
     }
 }

@@ -102,6 +102,8 @@ public class ChatClient {
         this.connection = connection;
     }
 
+
+
     @Override
     public String toString() {
         return "ChatClient{" +
