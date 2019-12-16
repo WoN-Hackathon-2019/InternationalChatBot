@@ -54,7 +54,13 @@ public class IncomingMessageAction extends BaseEventBotAction {
 
                 String atomID = parsed.getAsJsonObject().get("reqID").getAsString();
                 ChatClient sender = botContextWrapper.getChatClient(atomID);
-                ChatClient receiver = botContextWrapper.getChatClient(atomID, sender.getConnectionID());
+                if(sender == null){
+                    logger.info("weird ");
+                }
+                ChatClient receiver = botContextWrapper.getChatPartner(atomID, sender.getConnectionID());
+
+
+
 
 
             } else { // message from user
@@ -81,6 +87,15 @@ public class IncomingMessageAction extends BaseEventBotAction {
                             .put("reqID", sender.getAtomURI()).toString();
 
                     // TODO: SEND MESSAGE TO translate bot
+
+                    // TEST
+                    ChatClient receiver = botContextWrapper.getChatPartner(senderAtomUri, sender.getConnectionID());
+
+                    try {
+                        getEventListenerContext().getEventBus().publish(new ConnectionMessageCommandEvent(receiver.getConnection(), jsonString));
+                    } catch (Exception te) {
+                        logger.error(te.getMessage());
+                    }
 
                 }
             }

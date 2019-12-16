@@ -71,6 +71,7 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
         // activate ServiceAtomBehaviour
         serviceAtomBehaviour = new ServiceAtomBehaviour(ctx);
         serviceAtomBehaviour.activate();
+
         // set up matching extension
         // as this is an extension, it can be activated and deactivated as needed
         // if activated, a MatcherExtensionAtomCreatedEvent is sent every time a new

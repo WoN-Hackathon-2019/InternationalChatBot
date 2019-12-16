@@ -3,9 +3,12 @@ package won.bot.icb.context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.framework.bot.context.BotContext;
+import won.bot.framework.eventbot.event.impl.command.connect.ConnectCommandEvent;
 import won.bot.framework.extensions.serviceatom.ServiceAtomEnabledBotContextWrapper;
 import won.bot.icb.utils.ChatClient;
+import won.bot.icb.utils.ICBAtomModelWrapper;
 import won.protocol.model.Coordinate;
+import won.protocol.vocabulary.WXCHAT;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
@@ -48,6 +51,10 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
         getBotContext().removeFromListMap(connectedSocketsMap, senderSocket.toString(), targetSocket);
     }
 
+    public String getBotChatSocketURI() {
+        return getServiceAtomUri().toString() + "#chatSocket";
+    }
+
     public String getTranslateURI() {
         return translateURI;
     }
@@ -63,7 +70,7 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
      * @param ownCoord
      * @param reqCoord
      */
-    public boolean addChatPartner(String atomURI, Coordinate ownCoord, Coordinate reqCoord) {
+    public boolean addChatPartner(String atomURI, String chatSocketURI, Coordinate ownCoord, Coordinate reqCoord) {
 
         String sourceLong = Float.toString(ownCoord.getLongitude());
         String sourceLat = Float.toString(ownCoord.getLatitude());
@@ -83,7 +90,7 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
         }
         String reqCC = reqCCOpt.get();
 
-        ChatClient toAdd = new ChatClient(atomURI, ownCC, reqCC, sourceLat, sourceLong, targetLat, targetLon);
+        ChatClient toAdd = new ChatClient(atomURI, chatSocketURI, ownCC, reqCC, sourceLat, sourceLong, targetLat, targetLon);
         logger.info("Added Chatpartner: " + toAdd.toString());
         unmatchedChatClients.add(toAdd);
 
@@ -105,6 +112,14 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
                     unmatchedChatClients.remove(ucp1);
                     unmatchedChatClients.remove(ucp2);
                     // TODO: start connection to both chat partners
+                    String message = "Hello, let's connect! We found a partner for you! <3"; //optional welcome message
+
+                    ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(
+                            URI.create(getBotChatSocketURI()),
+                            URI.create(ucp1.getChatSocketURI()),
+                            message);
+                    getEventBus().publish(connectCommandEvent);
+                    // ----------------
                     logger.info("Successfully matched " + ucp1.getAtomURI() + " and " + ucp2.getAtomURI() + "with connection ID " + ucp1.getConnectionID());
                     return;
                 }
@@ -119,7 +134,7 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
         return null;
     }
 
-    public ChatClient getChatPartner(String chatPartnerURI, int conID){
+    public ChatClient getChatPartner(String chatPartnerURI, int conID) {
         for (ChatClient c : matchedChatClients) {
             if (!c.getAtomURI().equals(chatPartnerURI) && c.getConnectionID() == conID) return c;
         }

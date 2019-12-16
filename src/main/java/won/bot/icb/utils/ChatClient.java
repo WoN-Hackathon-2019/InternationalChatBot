@@ -5,19 +5,29 @@ import won.protocol.model.Connection;
 public class ChatClient {
 
     private String atomURI;
+    private String chatSocketURI;
     private String sourceCountryCode, targetCountryCode;
     private int connectionID;
     private Connection connection;
     private String sourceLat, sourceLon, targetLat, targetLon;
 
-    public ChatClient(String atomURI, String sourceCountryCode, String targetCountryCode, String sourceLat, String sourceLon, String targetLat, String targetLon) {
+    public ChatClient(String atomURI, String chatSocketURI, String sourceCountryCode, String targetCountryCode, String sourceLat, String sourceLon, String targetLat, String targetLon) {
         this.atomURI = atomURI;
+        this.chatSocketURI = chatSocketURI;
         this.sourceCountryCode = sourceCountryCode;
         this.targetCountryCode = targetCountryCode;
         this.sourceLat = sourceLat;
         this.sourceLon = sourceLon;
         this.targetLat = targetLat;
         this.targetLon = targetLon;
+    }
+
+    public String getChatSocketURI() {
+        return chatSocketURI;
+    }
+
+    public void setChatSocketURI(String chatSocketURI) {
+        this.chatSocketURI = chatSocketURI;
     }
 
     public String getSourceLat() {
