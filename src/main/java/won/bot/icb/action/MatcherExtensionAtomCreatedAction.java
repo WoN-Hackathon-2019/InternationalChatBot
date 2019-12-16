@@ -12,7 +12,7 @@ import won.bot.icb.utils.ICBAtomModelWrapper;
 import won.protocol.message.WonMessage;
 import won.protocol.message.builder.WonMessageBuilder;
 import won.protocol.util.DefaultAtomModelWrapper;
-import won.protocol.vocabulary.WXCHAT;
+import won.protocol.vocabulary.SCHEMA;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
@@ -47,6 +47,7 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
                 boolean passed = false;
                 ICBAtomModelWrapper newAtom = new ICBAtomModelWrapper(atomCreatedEvent.getAtomData());
                 Collection<String> tags = newAtom.getAllTags();
+                String name = newAtom.getContentPropertyStringValue(SCHEMA.NAME);
 
                 for (String t : tags) {
                     if(t.equals("#ICB")){
@@ -55,21 +56,12 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
                     }
                 }
 
+                /*if(name.equals("InternationalChatBot")){
+                    logger.info("New Atom with Name GlobalChattinator found");
+                }*/
+
                 if(passed) {
-                    String chatSocketURI = null;
-                    Collection<String> socketURIS = newAtom.getSocketUris();
-                    String chatSocketTypeURI = WXCHAT.ChatSocket.getURI();
-                    for (String s: socketURIS) {
-                        if(newAtom.getSocketType(s).isPresent() && newAtom.getSocketType(s).get().equals(chatSocketTypeURI)){
-                            chatSocketURI = s;
-                        }
-                    }
-
-                    if(chatSocketURI == null){
-                        logger.error("Chat Socket URI is NULL");
-                    }
-
-                    if(botContextWrapper.addChatPartner(newAtom.getAtomUri(), chatSocketURI, newAtom.getLocationCoordinate(), newAtom.getSeeksLocationCoordinate())){
+                    if(botContextWrapper.addChatPartner(newAtom.getAtomUri(), newAtom.getLocationCoordinate(), newAtom.getSeeksLocationCoordinate())){
                         logger.info("New Chat Partner successfully added");
                     } else {
                         logger.error("Error while adding new Chat Partner");
@@ -90,6 +82,8 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
                             .build();
                     ctx.getWonMessageSender().prepareAndSendMessage(wonMessage);
                 }
+
+
             }
         }
     }
