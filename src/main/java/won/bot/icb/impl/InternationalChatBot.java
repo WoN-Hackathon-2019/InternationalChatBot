@@ -29,10 +29,9 @@ import won.bot.framework.extensions.matcher.MatcherExtension;
 import won.bot.framework.extensions.matcher.MatcherExtensionAtomCreatedEvent;
 import won.bot.framework.extensions.serviceatom.ServiceAtomBehaviour;
 import won.bot.framework.extensions.serviceatom.ServiceAtomExtension;
-import won.bot.icb.action.ChatRelayAction;
+import won.bot.icb.action.IncomingMessageAndRequestTranslationAction;
 import won.bot.icb.action.MatcherExtensionAtomCreatedAction;
 import won.bot.icb.context.InternationalChatBotContextWrapper;
-import won.bot.icb.event.TranslationEvent;
 
 public class InternationalChatBot extends EventBot implements MatcherExtension, ServiceAtomExtension {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -138,9 +137,10 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
             }
         });
 
-        // listen for
+        // listen for the MessageFromOtherAtomEvent
         bus.subscribe(MessageFromOtherAtomEvent.class,
-                new ActionOnEventListener(ctx, "ReceivedTextMessage", new ChatRelayAction(ctx)));
+                new ActionOnEventListener(ctx, "ReceivedTextMessage", new IncomingMessageAndRequestTranslationAction(ctx)));
+
 
     }
 }

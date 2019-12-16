@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.framework.bot.context.BotContext;
 import won.bot.framework.extensions.serviceatom.ServiceAtomEnabledBotContextWrapper;
-import won.bot.icb.action.ChatRelayAction;
 import won.bot.icb.utils.ChatPartner;
 import won.protocol.model.Coordinate;
 

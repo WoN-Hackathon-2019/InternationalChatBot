@@ -19,10 +19,10 @@ import won.protocol.util.WonRdfUtils;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 
-public class ChatRelayAction extends BaseEventBotAction {
+public class IncomingMessageAndRequestTranslationAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    public ChatRelayAction(EventListenerContext ctx) {
+    public IncomingMessageAndRequestTranslationAction(EventListenerContext ctx) {
         super(ctx);
     }
 
