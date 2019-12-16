@@ -63,38 +63,9 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
         InternationalChatBotContextWrapper.translateURI = translateURI;
     }
 
-    /**
-     * Adds a Chat Partner
-     *
-     * @param atomURI
-     * @param ownCoord
-     * @param reqCoord
-     */
-    public boolean addChatPartner(String atomURI, String chatSocketURI, Coordinate ownCoord, Coordinate reqCoord) {
 
-        String sourceLong = Float.toString(ownCoord.getLongitude());
-        String sourceLat = Float.toString(ownCoord.getLatitude());
-
-        String targetLon = Float.toString(reqCoord.getLongitude());
-        String targetLat = Float.toString(reqCoord.getLatitude());
-
-        Optional<String> ownCCOpt = won.bot.icb.api.InternationalChatBotAPI.countryCodeOfGPS(sourceLat, sourceLong);
-        if (!ownCCOpt.isPresent()) {
-            return false;
-        }
-        String ownCC = ownCCOpt.get();
-
-        Optional<String> reqCCOpt = won.bot.icb.api.InternationalChatBotAPI.countryCodeOfGPS(targetLat, targetLon);
-        if (!reqCCOpt.isPresent()) {
-            return false;
-        }
-        String reqCC = reqCCOpt.get();
-
-        ChatClient toAdd = new ChatClient(atomURI, chatSocketURI, ownCC, reqCC, sourceLat, sourceLong, targetLat, targetLon);
-        logger.info("Added Chatpartner: " + toAdd.toString());
+    public void addChatPartner(ChatClient toAdd) {
         unmatchedChatClients.add(toAdd);
-
-        return true;
     }
 
 
