@@ -23,10 +23,7 @@ import won.protocol.vocabulary.WXCHAT;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -43,9 +40,10 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
         super(eventListenerContext);
     }
 
-    @Override protected void doRun(Event event, EventListener executingListener) throws Exception {
+    @Override
+    protected void doRun(Event event, EventListener executingListener) throws Exception {
         EventListenerContext ctx = getEventListenerContext();
-        if(!(event instanceof MatcherExtensionAtomCreatedEvent) || !(getEventListenerContext().getBotContextWrapper() instanceof InternationalChatBotContextWrapper)) {
+        if (!(event instanceof MatcherExtensionAtomCreatedEvent) || !(getEventListenerContext().getBotContextWrapper() instanceof InternationalChatBotContextWrapper)) {
             logger.error("MatcherExtensionAtomCreatedAction can only handle MatcherExtensionAtomCreatedEvent and only works with InternationalChatBotContextWrapper");
             return;
         }
@@ -77,7 +75,7 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
                 ctx.getEventBus().publish(connectCommandEvent);
             }
         } catch (Exception e) {
-            if(!(e instanceof won.protocol.exception.IncorrectPropertyCountException)) {
+            if (!(e instanceof won.protocol.exception.IncorrectPropertyCountException)) {
                 logger.error("Connecting to Bot failed - Exception: " + e.toString());
             }
         }
@@ -87,27 +85,27 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
         Collection<String> tags = newAtom.getAllTags();
 
         for (String t : tags) {
-            if(t.equals("#ICB")){
+            if (t.equals("#ICB")) {
                 passed = true;
                 logger.info("New Atom with Tag for ICB found");
             }
         }
 
-        if(passed) {
+        if (passed) {
             String chatSocketURI = null;
             Collection<String> socketURIS = newAtom.getSocketUris();
             String chatSocketTypeURI = WXCHAT.ChatSocket.getURI();
-            for (String s: socketURIS) {
-                if(newAtom.getSocketType(s).isPresent() && newAtom.getSocketType(s).get().equals(chatSocketTypeURI)){
+            for (String s : socketURIS) {
+                if (newAtom.getSocketType(s).isPresent() && newAtom.getSocketType(s).get().equals(chatSocketTypeURI)) {
                     chatSocketURI = s;
                 }
             }
 
-            if(chatSocketURI == null){
+            if (chatSocketURI == null) {
                 logger.error("Chat Socket URI is NULL");
             }
 
-            if(addChatPartner(ctx, botContextWrapper, newAtom.getAtomUri(), chatSocketURI, newAtom.getLocationCoordinate(), newAtom.getSeeksLocationCoordinate())){
+            if (addChatPartner(ctx, botContextWrapper, newAtom.getAtomUri(), chatSocketURI, newAtom.getLocationCoordinate(), newAtom.getSeeksLocationCoordinate())) {
                 logger.info("New Chat Partner successfully added");
             } else {
                 logger.error("Error while adding new Chat Partner");
@@ -115,7 +113,22 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
 
             // try to match chat partners
             logger.info("Trying to match chat partners");
-            botContextWrapper.matchChatPartners();
+            int conID = botContextWrapper.matchChatPartners();
+            if (conID != -1) {
+                ArrayList<ChatClient> clients = botContextWrapper.getConversationPartners(conID);
+                clients.forEach(c -> {
+                    WonMessage wonMessage = WonMessageBuilder
+                            .connectionMessage()
+                            .sockets()
+                            .sender(URI.create(icbChatSocketURI))
+                            .recipient(URI.create(c.getChatSocketURI()))
+                            .content()
+                            .text("We successfully matched you! Happy chatting!")
+                            .build();
+                    ctx.getWonMessageSender().prepareAndSendMessage(wonMessage);
+                });
+            }
+
 
         /*for(Map.Entry<URI, Set<URI>> entry : connectedSocketsMapSet.entrySet()) {
             URI senderSocket = entry.getKey();
@@ -179,7 +192,10 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
 
                     // try to match chat partners
                     logger.info("Trying to match chat partners");
-                    botContextWrapper.matchChatPartners();
+                    int conID = botContextWrapper.matchChatPartners();
+                    if(conID != -1){
+
+                    }
 
                     logger.info("TODO: Send MSG(" + senderSocket + "->" + targetSocket + ") that we registered that an ICB Atom was created, atomUri is: " + atomCreatedEvent.getAtomURI());
                     WonMessage wonMessage = WonMessageBuilder
@@ -196,7 +212,7 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
         }
     }
 
-    private boolean addChatPartner(EventListenerContext ectx, InternationalChatBotContextWrapper bctx, String atomURI, String chatSocketURI, Coordinate ownCoord, Coordinate reqCoord){
+    private boolean addChatPartner(EventListenerContext ectx, InternationalChatBotContextWrapper bctx, String atomURI, String chatSocketURI, Coordinate ownCoord, Coordinate reqCoord) {
         String sourceLong = Float.toString(ownCoord.getLongitude());
         String sourceLat = Float.toString(ownCoord.getLatitude());
 
@@ -218,7 +234,7 @@ public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
         ChatClient toAdd = new ChatClient(atomURI, chatSocketURI, ownCC, reqCC, sourceLat, sourceLong, targetLat, targetLon);
         logger.info("Added Chatpartner: " + toAdd.toString());
 
-        String message = "Hello, we have seen that you are interested in chatting with somebody from " + reqCC.toUpperCase() + "! We" +
+        String message = "Hello, we have seen that you are interested in chatting with somebody from " + reqCC.toUpperCase() + "! We " +
                 "are currently waiting for a partner to match with you...";
 
         ConnectCommandEvent connectCommandEvent = new ConnectCommandEvent(
