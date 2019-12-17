@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public class InternationalChatBotAPI {
 
-    static String locationiqKey = "pk.473ec37c019e2789c2f7f5da11e4951f";
+    static String locationiqKey = "pk.5e23130e4da787061f15047f154604c5";
 
     public static Optional<String> countryCodeOfGPS(String lat, String lon) {
 

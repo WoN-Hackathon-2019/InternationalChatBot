@@ -57,7 +57,7 @@
     <logger name="won.bot.impl.BAAtomicCCActiveExitingBot" level="INFO" />
     <logger name="won.protocol.util.linkeddata.CachingLinkedDataSource" level="INFO"/>
 
-    <root level="INFO">
+    <root level="OFF">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

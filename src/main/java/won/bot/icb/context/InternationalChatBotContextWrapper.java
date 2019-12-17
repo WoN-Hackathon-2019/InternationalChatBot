@@ -1,16 +1,22 @@
 package won.bot.icb.context;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import won.bot.framework.bot.context.BotContext;
 import won.bot.framework.extensions.serviceatom.ServiceAtomEnabledBotContextWrapper;
-import won.bot.icb.utils.ChatPartner;
-import won.protocol.model.Coordinate;
+import won.bot.icb.utils.ChatClient;
 
+import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.*;
 
 public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotContextWrapper {
     private final String connectedSocketsMap;
-    private final HashSet<ChatPartner> waitingChatPartners = new HashSet<>();
+    private final HashSet<ChatClient> unmatchedChatClients = new HashSet<>();
+    private final HashSet<ChatClient> matchedChatClients = new HashSet<>();
+    private String translateChatSocketURI; // translation atom URI
+    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private int conID = 1;
 
     public InternationalChatBotContextWrapper(BotContext botContext, String botName) {
         super(botContext, botName);
@@ -21,10 +27,10 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
         Map<String, List<Object>> connectedSockets = getBotContext().loadListMap(connectedSocketsMap);
         Map<URI, Set<URI>> connectedSocketsMapSet = new HashMap<>(connectedSockets.size());
 
-        for(Map.Entry<String, List<Object>> entry : connectedSockets.entrySet()) {
+        for (Map.Entry<String, List<Object>> entry : connectedSockets.entrySet()) {
             URI senderSocket = URI.create(entry.getKey());
             Set<URI> targetSocketsSet = new HashSet<>(entry.getValue().size());
-            for(Object o : entry.getValue()) {
+            for (Object o : entry.getValue()) {
                 targetSocketsSet.add((URI) o);
             }
             connectedSocketsMapSet.put(senderSocket, targetSocketsSet);
@@ -41,36 +47,90 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
         getBotContext().removeFromListMap(connectedSocketsMap, senderSocket.toString(), targetSocket);
     }
 
-    /**
-     * Adds a Chat Partner
-     * @param atomURI
-     * @param ownCoord
-     * @param reqCoord
-     */
-    public boolean addChatPartner(String atomURI, Coordinate ownCoord, Coordinate reqCoord){
+    public String getBotChatSocketURI() {
+        return getServiceAtomUri().toString() + "#ChatSocket";
+    }
 
-        String ownLong = Float.toString(ownCoord.getLongitude());
-        String ownLat = Float.toString(ownCoord.getLatitude());
+    public String getTranslateChatSocketURI() {
+        return translateChatSocketURI;
+    }
 
-        String reqLong = Float.toString(reqCoord.getLongitude());
-        String reqLat = Float.toString(reqCoord.getLatitude());
-
-        Optional<String> ownCCOpt = won.bot.icb.api.InternationalChatBotAPI.countryCodeOfGPS(ownLat, ownLong);
-        if(!ownCCOpt.isPresent()){
-            return false;
-        }
-        String ownCC = ownCCOpt.get();
-
-        Optional<String> reqCCOpt = won.bot.icb.api.InternationalChatBotAPI.countryCodeOfGPS(reqLat, reqLong);
-        if(!reqCCOpt.isPresent()){
-            return false;
-        }
-        String reqCC = reqCCOpt.get();
-
-        ChatPartner toAdd = new ChatPartner(atomURI, ownCC, reqCC);
-
-        return true;
+    public void setTranslateChatSocketURI(String translateChatSocketURI) {
+        this.translateChatSocketURI = translateChatSocketURI;
     }
 
 
+    public boolean addChatPartner(ChatClient toAdd) {
+        return unmatchedChatClients.add(toAdd);
+    }
+
+
+    public int matchChatPartners() {
+        // TODO: this is stupid, maybe do it better?
+        // try to match every atom with all other atoms
+        for (ChatClient ucp1 : unmatchedChatClients) {
+            for (ChatClient ucp2 : unmatchedChatClients) {
+                // atoms match
+                if (ucp1.getSourceCountryCode().equals(ucp2.getTargetCountryCode()) && ucp2.getSourceCountryCode().equals(ucp1.getTargetCountryCode())) {
+                    ucp1.setConnectionID(conID);
+                    ucp2.setConnectionID(conID);
+                    matchedChatClients.add(ucp1);
+                    matchedChatClients.add(ucp2);
+                    unmatchedChatClients.remove(ucp1);
+                    unmatchedChatClients.remove(ucp2);
+                    conID++;
+                    logger.info("Successfully matched " + ucp1.getAtomURI() + " and " + ucp2.getAtomURI() + "with connection ID " + ucp1.getConnectionID());
+                    return conID - 1;
+                }
+            }
+        }
+        return -1;
+    }
+
+    public ChatClient getUnmatchedChatClient(String chatClientURI) {
+        for (ChatClient c : unmatchedChatClients) {
+            if (c.getAtomURI().equals(chatClientURI)) return c;
+        }
+        return null;
+    }
+
+    public ChatClient getMatchedChatClient(String chatClientURI) {
+        for (ChatClient c : matchedChatClients) {
+            if (c.getAtomURI().equals(chatClientURI)) return c;
+        }
+        return null;
+    }
+
+    public ChatClient getChatClient(String chatClientURI) {
+        ChatClient unmatched = getUnmatchedChatClient(chatClientURI);
+        ChatClient matched = getMatchedChatClient(chatClientURI);
+        if (unmatched != null) {
+            return unmatched;
+        } else if (matched != null) {
+            return matched;
+        } else {
+            return null;
+        }
+    }
+
+    public ChatClient getChatPartner(String chatPartnerURI, int conID) {
+        for (ChatClient c : matchedChatClients) {
+            if (!c.getAtomURI().equals(chatPartnerURI) && c.getConnectionID() == conID) {
+                logger.info("ChatPartner for " + chatPartnerURI + " found: " + c.getAtomURI());
+                return c;
+            }
+        }
+        return null;
+    }
+
+    public ArrayList<ChatClient> getConversationPartners(int conID) {
+        ArrayList<ChatClient> ret = new ArrayList<>();
+
+        for (ChatClient c : matchedChatClients) {
+            if (c.getConnectionID() == conID) {
+                ret.add(c);
+            }
+        }
+        return ret;
+    }
 }
