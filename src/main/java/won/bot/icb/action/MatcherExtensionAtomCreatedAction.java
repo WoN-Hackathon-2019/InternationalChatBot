@@ -32,6 +32,10 @@ import java.util.Set;
 public class MatcherExtensionAtomCreatedAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+    // TranslateBot
+    private static String translateBot = "TranslateBot";
+    private static URI translateBotURI;
+
     public MatcherExtensionAtomCreatedAction(EventListenerContext eventListenerContext) {
         super(eventListenerContext);
     }
