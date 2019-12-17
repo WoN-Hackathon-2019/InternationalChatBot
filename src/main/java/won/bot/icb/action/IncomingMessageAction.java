@@ -3,6 +3,7 @@ package won.bot.icb.action;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import org.apache.commons.codec.binary.Base64;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,14 +55,30 @@ public class IncomingMessageAction extends BaseEventBotAction {
                 JsonParser jsonParser = new JsonParser();
                 JsonElement parsed = jsonParser.parse(sourceMessage);
 
-                String atomID = parsed.getAsJsonObject().get("reqID").getAsString();
+                byte[] decodedBytes = Base64.decodeBase64(parsed.getAsJsonObject().get("reqID").getAsString());
+                String atomID = new String(decodedBytes);
                 ChatClient sender = botContextWrapper.getMatchedChatClient(atomID);
                 if(sender == null){
-                    logger.info("weird ");
+                    logger.info("no sender found (message from translator) ");
                 }
                 ChatClient receiver = botContextWrapper.getChatPartner(atomID, sender.getConnectionID());
 
+                try {
+                    //getEventListenerContext().getEventBus().publish(new ConnectionMessageCommandEvent(receiver.getConnection(), jsonString));
 
+                    WonMessage wonMessage = WonMessageBuilder
+                            .connectionMessage()
+                            .sockets()
+                            .sender(URI.create(((InternationalChatBotContextWrapper) ctx.getBotContextWrapper()).getBotChatSocketURI()))
+                            .recipient(URI.create(receiver.getChatSocketURI()))
+                            .content()
+                            .text(parsed.getAsJsonObject().get("text").getAsString())
+                            .build();
+                    ctx.getWonMessageSender().prepareAndSendMessage(wonMessage);
+
+                } catch (Exception te) {
+                    logger.error(te.getMessage());
+                }
 
 
 
@@ -79,6 +96,7 @@ public class IncomingMessageAction extends BaseEventBotAction {
                         logger.error(te.getMessage());
                     }
                 } else {
+                    byte[] encodedBytes = Base64.encodeBase64(sender.getAtomURI().getBytes());
                     logger.info("Chat found");
                     String jsonString = new JSONObject()
                             .put("sourceLat", sender.getSourceLat())
@@ -86,7 +104,7 @@ public class IncomingMessageAction extends BaseEventBotAction {
                             .put("targetLat", sender.getTargetLat())
                             .put("targetLon", sender.getTargetLon())
                             .put("text", sourceMessage)
-                            .put("reqID", sender.getAtomURI()).toString();
+                            .put("reqID", new String(encodedBytes)).toString();
 
                     // TODO: SEND MESSAGE TO translate bot
 
@@ -109,7 +127,6 @@ public class IncomingMessageAction extends BaseEventBotAction {
                     } catch (Exception te) {
                         logger.error(te.getMessage());
                     }
-
                 }
             }
         }
