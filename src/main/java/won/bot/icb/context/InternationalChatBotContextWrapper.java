@@ -3,12 +3,8 @@ package won.bot.icb.context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.framework.bot.context.BotContext;
-import won.bot.framework.eventbot.event.impl.command.connect.ConnectCommandEvent;
 import won.bot.framework.extensions.serviceatom.ServiceAtomEnabledBotContextWrapper;
 import won.bot.icb.utils.ChatClient;
-import won.bot.icb.utils.ICBAtomModelWrapper;
-import won.protocol.model.Coordinate;
-import won.protocol.vocabulary.WXCHAT;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
@@ -18,7 +14,7 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
     private final String connectedSocketsMap;
     private final HashSet<ChatClient> unmatchedChatClients = new HashSet<>();
     private final HashSet<ChatClient> matchedChatClients = new HashSet<>();
-    private static String translateURI; // translation atom URI
+    private String translateChatSocketURI; // translation atom URI
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private int conID = 1;
 
@@ -55,12 +51,12 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
         return getServiceAtomUri().toString() + "#ChatSocket";
     }
 
-    public String getTranslateURI() {
-        return translateURI;
+    public String getTranslateChatSocketURI() {
+        return translateChatSocketURI;
     }
 
-    public static void setTranslateURI(String translateURI) {
-        InternationalChatBotContextWrapper.translateURI = translateURI;
+    public void setTranslateChatSocketURI(String translateChatSocketURI) {
+        this.translateChatSocketURI = translateChatSocketURI;
     }
 
 
@@ -125,4 +121,6 @@ public class InternationalChatBotContextWrapper extends ServiceAtomEnabledBotCon
         }
         return null;
     }
+
+
 }

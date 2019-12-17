@@ -44,19 +44,22 @@ public class IncomingMessageAction extends BaseEventBotAction {
                 && ctx.getBotContextWrapper() instanceof InternationalChatBotContextWrapper) {
             InternationalChatBotContextWrapper botContextWrapper = (InternationalChatBotContextWrapper) ctx.getBotContextWrapper();
             Connection senderCon = ((MessageFromOtherAtomEvent) event).getCon();
+            String senderAtomChatSocketUri = senderCon.getTargetSocketURI().toString();
             String senderAtomUri = senderCon.getTargetAtomURI().toString();
 
             String sourceMessage = extractTextMessageFromWonMessage(((MessageFromOtherAtomEvent) event).getWonMessage());
 
             // decide if message from translation bot or client#
             // TODO: could split this with events
-            if (senderAtomUri.equals(botContextWrapper.getTranslateURI())) { // message from bot
-                logger.info("Message from translator");
+            if (senderAtomChatSocketUri.equals(botContextWrapper.getTranslateChatSocketURI())) { // message from bot
+                logger.info("Message from translator: " + sourceMessage);
                 JsonParser jsonParser = new JsonParser();
                 JsonElement parsed = jsonParser.parse(sourceMessage);
 
                 byte[] decodedBytes = Base64.decodeBase64(parsed.getAsJsonObject().get("reqID").getAsString());
                 String atomID = new String(decodedBytes);
+                logger.info("Base64 decoded: " + atomID);
+
                 ChatClient sender = botContextWrapper.getMatchedChatClient(atomID);
                 if(sender == null){
                     logger.info("no sender found (message from translator) ");
@@ -65,25 +68,25 @@ public class IncomingMessageAction extends BaseEventBotAction {
 
                 try {
                     //getEventListenerContext().getEventBus().publish(new ConnectionMessageCommandEvent(receiver.getConnection(), jsonString));
-
+                    logger.info("Trying to send Message to User: " + parsed.getAsJsonObject().get("message").getAsString());
                     WonMessage wonMessage = WonMessageBuilder
                             .connectionMessage()
                             .sockets()
                             .sender(URI.create(((InternationalChatBotContextWrapper) ctx.getBotContextWrapper()).getBotChatSocketURI()))
                             .recipient(URI.create(receiver.getChatSocketURI()))
                             .content()
-                            .text(parsed.getAsJsonObject().get("text").getAsString())
+                            .text(parsed.getAsJsonObject().get("message").getAsString())
                             .build();
                     ctx.getWonMessageSender().prepareAndSendMessage(wonMessage);
 
                 } catch (Exception te) {
-                    logger.error(te.getMessage());
+                    logger.error("Error sending message: " + te.toString());
                 }
 
 
 
             } else { // message from user
-                logger.info("Message from user");
+                logger.info("Message from user: " + sourceMessage);
                 // find receiver URI
                 ChatClient sender = botContextWrapper.getMatchedChatClient(senderAtomUri);
 
@@ -96,6 +99,7 @@ public class IncomingMessageAction extends BaseEventBotAction {
                         logger.error(te.getMessage());
                     }
                 } else {
+                    logger.info("Real Atom URI:  " + sender.getAtomURI());
                     byte[] encodedBytes = Base64.encodeBase64(sender.getAtomURI().getBytes());
                     logger.info("Chat found");
                     String jsonString = new JSONObject()
@@ -114,18 +118,22 @@ public class IncomingMessageAction extends BaseEventBotAction {
                     try {
                         //getEventListenerContext().getEventBus().publish(new ConnectionMessageCommandEvent(receiver.getConnection(), jsonString));
 
+                        logger.info("Trying to send Message to Translator: " + jsonString);
                         WonMessage wonMessage = WonMessageBuilder
                                 .connectionMessage()
                                 .sockets()
                                 .sender(URI.create(((InternationalChatBotContextWrapper) ctx.getBotContextWrapper()).getBotChatSocketURI()))
-                                .recipient(URI.create(receiver.getChatSocketURI()))
+                                .recipient(URI.create(((InternationalChatBotContextWrapper) ctx.getBotContextWrapper()).getTranslateChatSocketURI()))
                                 .content()
                                 .text(jsonString)
                                 .build();
                         ctx.getWonMessageSender().prepareAndSendMessage(wonMessage);
+                        logger.info("Sent message: " + wonMessage.toShortStringForDebug());
+                        logger.info("Sent text in message: " + extractTextMessageFromWonMessage(wonMessage));
 
                     } catch (Exception te) {
-                        logger.error(te.getMessage());
+                        logger.error("Error sending Message: " + te.getMessage());
+
                     }
                 }
             }

@@ -88,7 +88,7 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
         // filter to prevent reacting to serviceAtom<->ownedAtom events;
         NotFilter noInternalServiceAtomEventFilter = getNoInternalServiceAtomEventFilter();
 
-        bus.subscribe(ConnectFromOtherAtomEvent.class, noInternalServiceAtomEventFilter, new BaseEventBotAction(ctx) {
+        /*bus.subscribe(ConnectFromOtherAtomEvent.class, noInternalServiceAtomEventFilter, new BaseEventBotAction(ctx) {
             @Override
             protected void doRun(Event event, EventListener executingListener) {
                 EventListenerContext ctx = getEventListenerContext();
@@ -151,7 +151,7 @@ public class InternationalChatBot extends EventBot implements MatcherExtension, 
                     logger.error(te.getMessage(), te);
                 }
             }
-        });
+        });*/
 
         // listen for the MatcherExtensionAtomCreatedEvent
         bus.subscribe(MatcherExtensionAtomCreatedEvent.class, new MatcherExtensionAtomCreatedAction(ctx));
